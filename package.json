@@ -20,15 +20,12 @@
   "homepage": "https://github.com/O-Bots/testing-practice#readme",
   "devDependencies": {
     "@playwright/test": "^1.53.0",
-<<<<<<< main
     "@types/node": "^24.0.2"
   },
   "dependencies": {
-    "dotenv": "^16.5.0"
-=======
+    "dotenv": "^16.5.0",
     "@types/node": "^24.0.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"
->>>>>>> main
   }
 }
