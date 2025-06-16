@@ -1,5 +1,19 @@
 {
     "account_name": "Charles Bondter",
     "email": "qatest@qatest.com",
-    "password": "password"
+    "password": "password",
+    "dob":{
+        "day": "3",
+        "month": "May",
+        "year": "1990"
+    },
+    "first_name": "Charlie",
+    "last_name": "Bondter",
+    "living_address": {
+        "address": "123 Gumbo Street",
+        "state": "Shoehorn",
+        "city": "GreySkinned",
+        "zipcode": "12Balls"
+    },
+    "mobile_number": "12345678913"
 }
