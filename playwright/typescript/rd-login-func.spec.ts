@@ -6,8 +6,6 @@ dotenv.config({ path: ".env" });
 const rd_email: any = process.env.rd_email_address ?? "";
 const rd_password: any = process.env.rd_password ?? "";
 
-let rd_loginToken;
-
 test("Verify existing user login (using API)", async ({ page }) => {
   //Create new API context to switch to API mode:
   const APIContext = await request.newContext();
@@ -27,6 +25,7 @@ test("Verify existing user login (using API)", async ({ page }) => {
     },
   });
 
+  //Assert the loginResponse to be ok:
   expect(loginResponse.ok()).toBeTruthy();
   console.log(`Login Response Status: ${loginResponse.status()}`);
 
