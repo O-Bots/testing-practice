@@ -7,10 +7,14 @@
         "month": "May",
         "year": "1990"
     },
+    "title": "Mr",
     "first_name": "Charlie",
     "last_name": "Bondter",
+    "company": "Graterdeng",
     "living_address": {
         "address": "123 Gumbo Street",
+        "address2": "Sweetlane",
+        "country": "Canada" ,
         "state": "Shoehorn",
         "city": "GreySkinned",
         "zipcode": "12Balls"

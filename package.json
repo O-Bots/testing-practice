@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "npm start"
+    "testui": "npx playwright test --ui --workers=1"
   },
   "repository": {
     "type": "git",

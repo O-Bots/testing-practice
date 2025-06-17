@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, request } from '@playwright/test';
 
 import account from '../../test-data/ow_accountdetails.json';
 
@@ -7,7 +7,7 @@ const baseURL = 'https://www.automationexercise.com/'
 async function createUser(browser: any) {
     await browser.getByRole('link', { name: ' Signup / Login' }).click()
 
-    expect(browser.locator('div').filter({ hasText: 'New User Signup! Signup' }).nth(2)).toBeVisible()
+    await expect(browser.locator('div').filter({ hasText: 'New User Signup! Signup' }).nth(2)).toBeVisible()
 
     await browser.getByRole('textbox', { name: 'Name' }).fill(account.account_name)
     await browser.locator('form').filter({ hasText: 'Signup' }).getByPlaceholder('Email Address').fill(account.email)
@@ -22,7 +22,7 @@ async function createUser(browser: any) {
     await browser.getByRole('textbox', { name: 'Last name *' }).fill(account.last_name)
 
     await browser.getByRole('textbox', { name: 'Address * (Street address, P.' }).fill(account.living_address.address)
-    await browser.getByLabel('Country *').selectOption("Canada")
+    await browser.getByLabel('Country *').selectOption(account.living_address.country)
     await browser.getByRole('textbox', { name: 'State *' }).fill(account.living_address.state)
     await browser.getByRole('textbox', { name: 'City * Zipcode *' }).fill(account.living_address.city)
     await browser.locator('#zipcode').fill(account.living_address.zipcode)
@@ -43,7 +43,7 @@ async function createUser(browser: any) {
 async function login(browser: any) {
     await browser.getByRole('link', { name: ' Signup / Login' }).click()
 
-    expect(browser.getByText('Login to your account Login')).toBeVisible()
+    await expect(browser.getByText('Login to your account Login')).toBeVisible()
 
     await browser.getByTestId('login-email').fill(account.email)
     await browser.getByTestId('login-password').fill(account.password)
@@ -53,21 +53,52 @@ async function login(browser: any) {
     expect(await browser.locator('.shop-menu.pull-right').getByRole('listitem').nth(9).locator('b').innerText()).toEqual(account.account_name);
 }
 
-test.beforeEach('Test prep', async ({page}) => {
-    await page.goto(baseURL)
-    await page.getByRole('button', { name: 'Consent' }).click()
+test.beforeEach('Test prep', async ({page}, testInfo) => {
+    if(!testInfo.title.includes('API')){
+        await page.goto(baseURL)
+        await page.getByRole('button', { name: 'Consent' }).click()
+    }
 })
 
 test.describe("Account functionality", () => {
-    test("Account can be created as expected", async ({page}) => {
+    test("ACC-01+08 Account can be created as expected", async ({page}) => {
         
         await createUser(page)
 
     })
-    test("Can log in to an already created account", async ({page}) => {
+
+    test("ACC-02 Unable to create account with already used email", async ({page}) => {
         await page.getByRole('link', { name: ' Signup / Login' }).click()
 
-        expect(await page.getByText('Login to your account Login')).toBeVisible()
+        await expect(page.locator('div').filter({ hasText: 'New User Signup! Signup' }).nth(2)).toBeVisible()
+
+        await page.getByRole('textbox', { name: 'Name' }).fill(account.account_name)
+        await page.locator('form').filter({ hasText: 'Signup' }).getByPlaceholder('Email Address').fill(account.email)
+        await page.getByRole('button', { name: 'Signup' }).click()
+    })
+
+    test("ACC-03 Unable to create account with missing required fields", async ({page}) => {
+        await page.getByRole('link', { name: ' Signup / Login' }).click()
+
+        await expect(page.locator('div').filter({ hasText: 'New User Signup! Signup' }).nth(2)).toBeVisible()
+
+        await page.getByRole('textbox', { name: 'Name' }).fill(account.account_name)
+        await page.locator('form').filter({ hasText: 'Signup' }).getByPlaceholder('Email Address').fill(1+account.email)
+        await page.getByRole('button', { name: 'Signup' }).click()
+
+        await page.click('#id_gender1')
+        await page.getByRole('textbox', { name: 'Password *' }).fill(account.password)
+        await page.locator('#days').selectOption(account.dob.day)
+        await page.getByRole('button', { name: 'Create Account' }).click()
+
+        expect(await page.url()).toContain("signup")
+        
+    })
+
+    test("ACC-04+08 Can log in to an already created account", async ({page}) => {
+        await page.getByRole('link', { name: ' Signup / Login' }).click()
+
+        await expect(page.getByText('Login to your account Login')).toBeVisible()
 
         await page.getByTestId('login-email').fill(account.email)
         await page.getByTestId('login-password').fill(account.password)
@@ -78,11 +109,33 @@ test.describe("Account functionality", () => {
 
         //Log out of account
         await page.locator('.shop-menu.pull-right').getByRole('listitem').nth(3).click()
-
-        // //Verify account is logged out
-        // expect(await page.getByText('Login to your account Login')).toBeVisible()
     })
-    test("Can log in and delete an already created account", async ({page}) => {
+
+    test("ACC-05 Unable to login with incorrect details", async ({page}) => {
+        await page.getByRole('link', { name: ' Signup / Login' }).click()
+
+        await expect(page.getByText('Login to your account Login')).toBeVisible()
+
+        await page.getByTestId('login-email').fill(account.email+1)
+        await page.getByTestId('login-password').fill(account.password)
+        await page.getByTestId('login-button').click()
+        
+        await expect(page.locator('.login-form').locator('p')).toHaveText('Your email or password is incorrect!')
+    })
+
+    test("ACC-06 Unable to login with case incorrect details", async ({page}) => {
+        await page.getByRole('link', { name: ' Signup / Login' }).click()
+
+        await expect(page.getByText('Login to your account Login')).toBeVisible()
+
+        await page.getByTestId('login-email').fill(account.email)
+        await page.getByTestId('login-password').fill(account.password.toLocaleUpperCase())
+        await page.getByTestId('login-button').click()
+        
+        await expect(page.locator('.login-form').locator('p')).toHaveText('Your email or password is incorrect!')
+    })
+
+    test("ACC-10 Can delete an already created account", async ({page}) => {
 
         await login(page)
 
