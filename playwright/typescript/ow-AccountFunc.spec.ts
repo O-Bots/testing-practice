@@ -30,16 +30,66 @@ async function createUser(browser: any) {
     await browser.getByRole('button', { name: 'Create Account' }).click()
     await browser.locator('.btn.btn-primary', {hasText: 'Continue'}).click();
 
+    //Verify that the account name is correct
     expect(await browser.locator('.shop-menu.pull-right').getByRole('listitem').nth(9).locator('b').innerText()).toEqual(account.account_name);
-    
+
+    //Log out of account
+    await browser.locator('.shop-menu.pull-right').getByRole('listitem').nth(3).click()
+
+    // //Verify account is logged out
+    // expect(await browser.getByText('Login to your account Login')).toBeVisible()
 }
+
+async function login(browser: any) {
+    await browser.getByRole('link', { name: ' Signup / Login' }).click()
+
+    expect(browser.getByText('Login to your account Login')).toBeVisible()
+
+    await browser.getByTestId('login-email').fill(account.email)
+    await browser.getByTestId('login-password').fill(account.password)
+    await browser.getByTestId('login-button').click()
+
+    //Verify that the account name is correct
+    expect(await browser.locator('.shop-menu.pull-right').getByRole('listitem').nth(9).locator('b').innerText()).toEqual(account.account_name);
+}
+
 test.beforeEach('Test prep', async ({page}) => {
     await page.goto(baseURL)
     await page.getByRole('button', { name: 'Consent' }).click()
 })
 
-test("Account functionality", async ({page}) => {
+test.describe("Account functionality", () => {
+    test("Account can be created as expected", async ({page}) => {
+        
+        await createUser(page)
 
-    await createUser(page)
-    // await page.getByRole('link', { name: ' Delete Account' }).click()
-}) 
+    })
+    test("Can log in to an already created account", async ({page}) => {
+        await page.getByRole('link', { name: ' Signup / Login' }).click()
+
+        expect(await page.getByText('Login to your account Login')).toBeVisible()
+
+        await page.getByTestId('login-email').fill(account.email)
+        await page.getByTestId('login-password').fill(account.password)
+        await page.getByTestId('login-button').click()
+
+        //Verify that the account name is correct
+        expect(await page.locator('.shop-menu.pull-right').getByRole('listitem').nth(9).locator('b').innerText()).toEqual(account.account_name);
+
+        //Log out of account
+        await page.locator('.shop-menu.pull-right').getByRole('listitem').nth(3).click()
+
+        // //Verify account is logged out
+        // expect(await page.getByText('Login to your account Login')).toBeVisible()
+    })
+    test("Can log in and delete an already created account", async ({page}) => {
+
+        await login(page)
+
+        await page.getByRole('link', { name: ' Delete Account' }).click()
+
+        //Confirm account deletion
+        await page.locator('.btn.btn-primary', {hasText: 'Continue'}).click();
+
+    })
+})
