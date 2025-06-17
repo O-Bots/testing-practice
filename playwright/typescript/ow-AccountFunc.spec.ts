@@ -60,6 +60,7 @@ async function login(browser: any) {
 //         await page.getByRole('button', { name: 'Consent' }).click()
 //     }
 // })
+let context_loggedIn: any
 
 test.describe("Account functionality", () => {
     test("ACC-01+08 Account can be created as expected", async ({page}) => {
@@ -104,7 +105,6 @@ test.describe("Account functionality", () => {
         // await page.getByTestId('login-email').fill(account.email)
         // await page.getByTestId('login-password').fill(account.password)
         // await page.getByTestId('login-button').click()
-        let context_loggedIn: any
         const loginHelper = new LoginHelper(account.email, account.password);
         context_loggedIn = await loginHelper.loginSaveStorageState();
 
