@@ -7,3 +7,4 @@ node_modules/
 /playwright/.cache/
 /rd_AccountDetails.json
 .env
+storageState_*.json

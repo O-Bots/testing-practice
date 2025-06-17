@@ -8,7 +8,7 @@
 //2. Use storageState() method to save the storage state (cookies etc.)
 //3. Save the storage state to a .json file
 
-import { chromium, Browser, BrowserContext, Page } from "@playwright/test";
+import { chromium, Browser, BrowserContext } from "@playwright/test";
 import fs from "fs";
 
 export class LoginHelper {
@@ -42,7 +42,7 @@ export class LoginHelper {
     //Check for an existing .json file that matches the unique user.
     //If it aleady exists, return the browser context with the .json file it found:
     if (fs.existsSync(this.storageStatePath)) {
-      console.log(`File "${this.storageStatePath}" found, using this.`);
+      console.log(`File "${this.storageStatePath}" found, using this as the storageState.`);
       return await this.browser.newContext({ storageState: this.storageStatePath });
     } else {
       const context = await this.browser.newContext();
@@ -59,7 +59,7 @@ export class LoginHelper {
 
       //Save the current storageState:
       await context.storageState({ path: this.storageStatePath });
-      console.log(`Created new file: "${this.storageStatePath}"`);
+      console.log(`Created new storageState file "${this.storageStatePath}"`);
       return context;
     }
   }
