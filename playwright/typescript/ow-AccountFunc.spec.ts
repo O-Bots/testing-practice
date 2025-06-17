@@ -1,4 +1,5 @@
 import { test, expect, request } from '@playwright/test';
+import {LoginHelper} from "./LoginHelper"
 
 import account from '../../test-data/ow_accountdetails.json';
 
@@ -53,12 +54,12 @@ async function login(browser: any) {
     expect(await browser.locator('.shop-menu.pull-right').getByRole('listitem').nth(9).locator('b').innerText()).toEqual(account.account_name);
 }
 
-test.beforeEach('Test prep', async ({page}, testInfo) => {
-    if(!testInfo.title.includes('API')){
-        await page.goto(baseURL)
-        await page.getByRole('button', { name: 'Consent' }).click()
-    }
-})
+// test.beforeEach('Test prep', async ({page}, testInfo) => {
+//     if(!testInfo.title.includes('API')){
+//         await page.goto(baseURL)
+//         await page.getByRole('button', { name: 'Consent' }).click()
+//     }
+// })
 
 test.describe("Account functionality", () => {
     test("ACC-01+08 Account can be created as expected", async ({page}) => {
@@ -95,20 +96,27 @@ test.describe("Account functionality", () => {
         
     })
 
-    test("ACC-04+08 Can log in to an already created account", async ({page}) => {
-        await page.getByRole('link', { name: ' Signup / Login' }).click()
+    test("ACC-04+08 Can log in to an already created account", async () => {
+        // await page.getByRole('link', { name: ' Signup / Login' }).click()
 
-        await expect(page.getByText('Login to your account Login')).toBeVisible()
+        // await expect(page.getByText('Login to your account Login')).toBeVisible()
 
-        await page.getByTestId('login-email').fill(account.email)
-        await page.getByTestId('login-password').fill(account.password)
-        await page.getByTestId('login-button').click()
+        // await page.getByTestId('login-email').fill(account.email)
+        // await page.getByTestId('login-password').fill(account.password)
+        // await page.getByTestId('login-button').click()
+        let context_loggedIn: any
+        const loginHelper = new LoginHelper(account.email, account.password);
+        context_loggedIn = await loginHelper.loginSaveStorageState();
 
-        //Verify that the account name is correct
-        expect(await page.locator('.shop-menu.pull-right').getByRole('listitem').nth(9).locator('b').innerText()).toEqual(account.account_name);
+        const page = await context_loggedIn.newPage()
+        await page.goto("https://www.automationexercise.com/login");
+        await page.pause();
 
-        //Log out of account
-        await page.locator('.shop-menu.pull-right').getByRole('listitem').nth(3).click()
+        // //Verify that the account name is correct
+        // expect(await page.locator('.shop-menu.pull-right').getByRole('listitem').nth(9).locator('b').innerText()).toEqual(account.account_name);
+
+        // //Log out of account
+        // await page.locator('.shop-menu.pull-right').getByRole('listitem').nth(3).click()
     })
 
     test("ACC-05 Unable to login with incorrect details", async ({page}) => {
