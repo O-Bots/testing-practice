@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-import account from '../../ow_accountdetails.json';
+import account from '../../test-data/ow_accountdetails.json';
 
 const baseURL = 'https://www.automationexercise.com/'
 
