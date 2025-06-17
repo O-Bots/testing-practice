@@ -42,6 +42,7 @@ export class LoginHelper {
     //Check for an existing .json file that matches the unique user.
     //If it aleady exists, return the browser context with the .json file it found:
     if (fs.existsSync(this.storageStatePath)) {
+      console.log(`File "${this.storageStatePath}" found, using this.`);
       return await this.browser.newContext({ storageState: this.storageStatePath });
     } else {
       const context = await this.browser.newContext();
@@ -57,6 +58,7 @@ export class LoginHelper {
 
       //Save the current storageState:
       await context.storageState({ path: this.storageStatePath });
+      console.log(`Created new file: "${this.storageStatePath}"`);
       return context;
     }
   }
