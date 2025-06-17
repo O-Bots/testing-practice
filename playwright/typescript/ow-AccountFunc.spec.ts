@@ -146,3 +146,14 @@ test.describe("Account functionality", () => {
 
     })
 })
+
+test.describe("Purchase flow", () => {
+    test("PUR-01 Searching for an existing product works as expected", async ({page}) => {
+        await page.getByRole('link', { name: 'Products' }).click()
+        await page.getByRole('textbox', { name: 'Search Product' }).fill("Stylish Dress")
+        await page.locator('#submit_search').click()
+        
+        expect(await page.locator('.productinfo.text-center').nth(0).innerText()).toContain("Stylish Dress")
+        
+    })
+})
