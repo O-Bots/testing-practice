@@ -77,6 +77,7 @@ test.describe("Account functionality", () => {
         await page.getByRole('textbox', { name: 'Name' }).fill(account.account_name)
         await page.locator('form').filter({ hasText: 'Signup' }).getByPlaceholder('Email Address').fill(account.email)
         await page.getByRole('button', { name: 'Signup' }).click()
+        
     })
 
     test("ACC-03 Unable to create account with missing required fields", async ({page}) => {
