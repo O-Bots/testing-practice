@@ -1,5 +1,4 @@
-import { test, expect, request } from '@playwright/test';
-import {LoginHelper} from "./LoginHelper"
+import { test, expect } from '@playwright/test';
 
 import account from '../../test-data/ow_accountdetails.json';
 
@@ -54,13 +53,12 @@ async function login(browser: any) {
     expect(await browser.locator('.shop-menu.pull-right').getByRole('listitem').nth(9).locator('b').innerText()).toEqual(account.account_name);
 }
 
-// test.beforeEach('Test prep', async ({page}, testInfo) => {
-//     if(!testInfo.title.includes('API')){
-//         await page.goto(baseURL)
-//         await page.getByRole('button', { name: 'Consent' }).click()
-//     }
-// })
-let context_loggedIn: any
+test.beforeEach('Test prep', async ({page}, testInfo) => {
+    if(!testInfo.title.includes('API')){
+        await page.goto(baseURL)
+        await page.getByRole('button', { name: 'Consent' }).click()
+    }
+})
 
 test.describe("Account functionality", () => {
     test("ACC-01+08 Account can be created as expected", async ({page}) => {
@@ -98,26 +96,20 @@ test.describe("Account functionality", () => {
         
     })
 
-    test("ACC-04+08 Can log in to an already created account", async () => {
-        // await page.getByRole('link', { name: ' Signup / Login' }).click()
+    test("ACC-04+08 Can log in to an already created account", async ({page}) => {
+        await page.getByRole('link', { name: ' Signup / Login' }).click()
 
-        // await expect(page.getByText('Login to your account Login')).toBeVisible()
+        await expect(page.getByText('Login to your account Login')).toBeVisible()
 
-        // await page.getByTestId('login-email').fill(account.email)
-        // await page.getByTestId('login-password').fill(account.password)
-        // await page.getByTestId('login-button').click()
-        const loginHelper = new LoginHelper(account.email, account.password);
-        context_loggedIn = await loginHelper.loginSaveStorageState();
+        await page.getByTestId('login-email').fill(account.email)
+        await page.getByTestId('login-password').fill(account.password)
+        await page.getByTestId('login-button').click()
 
-        const page = await context_loggedIn.newPage()
-        await page.goto("https://www.automationexercise.com/login");
-        await page.pause();
+        //Verify that the account name is correct
+        expect(await page.locator('.shop-menu.pull-right').getByRole('listitem').nth(9).locator('b').innerText()).toEqual(account.account_name);
 
-        // //Verify that the account name is correct
-        // expect(await page.locator('.shop-menu.pull-right').getByRole('listitem').nth(9).locator('b').innerText()).toEqual(account.account_name);
-
-        // //Log out of account
-        // await page.locator('.shop-menu.pull-right').getByRole('listitem').nth(3).click()
+        //Log out of account
+        await page.locator('.shop-menu.pull-right').getByRole('listitem').nth(3).click()
     })
 
     test("ACC-05 Unable to login with incorrect details", async ({page}) => {
@@ -160,9 +152,106 @@ test.describe("Purchase flow", () => {
     test("PUR-01 Searching for an existing product works as expected", async ({page}) => {
         await page.getByRole('link', { name: 'Products' }).click()
         await page.getByRole('textbox', { name: 'Search Product' }).fill("Stylish Dress")
-        await page.locator('#submit_search').click()
+        await page.locator('#submit_search').click()        
         
         expect(await page.locator('.productinfo.text-center').nth(0).innerText()).toContain("Stylish Dress")
         
+    })
+
+    test("PUR-02 Searching for a non-existent product works as expected", async ({page}) => {
+        await page.getByRole('link', { name: 'Products' }).click()
+        await page.getByRole('textbox', { name: 'Search Product' }).fill("Dark Souls 2")
+        await page.locator('#submit_search').click()
+
+        expect(await page.locator('.single-products').count()).toEqual(0)
+    })
+
+    test("PUR-03 Browsing categories work as expected", async ({page}) => {
+        const categories = await page.locator('.category-products .panel-default').nth(0)
+        const mainCategory = await categories.locator('.panel-heading').innerText()
+        const subCategory = await categories.locator('//div[@class="panel-body"]/ul/li[1]').innerText()
+
+        await page.getByRole('link', { name: 'Women' }).click()
+        await page.getByRole('link', { name: 'Dress' }).click()
+        
+        expect((await page.locator('.title').innerText()).toLocaleLowerCase()).toContain(mainCategory.toLocaleLowerCase())
+        expect((await page.locator('.title').innerText()).toLocaleLowerCase()).toContain(subCategory.toLocaleLowerCase())
+    })
+
+    test("PUR-4 Product details are correct on the product detail page", async ({page}) => {
+        const featuredItems = await page.locator('//div[@class="features_items"]//div[@class="product-image-wrapper"]').all()
+        const rngItem = Math.floor(Math.random() * featuredItems.length)
+        const itemName = await featuredItems[rngItem].locator('.productinfo').locator('p').innerText()
+        const itemPrice = await featuredItems[rngItem].locator('.productinfo').locator('h2').innerText()
+
+        await featuredItems[rngItem].locator('.choose').click()
+
+        const productInfoName = await page.locator('.product-information').locator('h2').innerText()
+        const productInfoPrice = await page.locator('//div[@class="product-information"]/span/span').innerText()
+
+        expect(itemName.toLocaleLowerCase()).toEqual(productInfoName.toLocaleLowerCase())
+
+        //Used regex (/^Rs\.?\s*/, '') to remove the "Rs. " leaving only the price
+        expect(itemPrice.replace(/^Rs\.?\s*/, '')).toEqual(productInfoPrice.replace(/^Rs\.?\s*/, ''))
+    })
+
+    test("PUR-05 Successfully adds a product to the cart", async ({page}) => {
+        const featuredItems = await page.locator('//div[@class="features_items"]//div[@class="product-image-wrapper"]').all()
+        const rngItem = Math.floor(Math.random() * featuredItems.length)
+        const itemName = await featuredItems[rngItem].locator('.productinfo').locator('p').innerText()
+        const itemPrice = await featuredItems[rngItem].locator('.productinfo').locator('h2').innerText()
+
+        await featuredItems[rngItem].locator('.productinfo').locator('.add-to-cart').click()
+        await page.locator('.close-modal').click()
+        await page.locator('//ul[@class="nav navbar-nav"]/li[3]').click()
+
+        const cartItemName = await page.locator('//td[@class="cart_description"]//a').innerText()
+        const cartItemPrice = await page.locator('//td[@class="cart_price"]/p').innerText()
+        
+        expect(itemName.toLocaleLowerCase()).toEqual(cartItemName.toLocaleLowerCase())
+        expect(itemPrice.replace(/^Rs\.?\s*/, '')).toEqual(cartItemPrice.replace(/^Rs\.?\s*/, ''))
+    })
+
+    test("PUR-06 Successfully changes quantity of items in cart", async ({page}) => {
+        const featuredItems = await page.locator('//div[@class="features_items"]//div[@class="product-image-wrapper"]').all()
+        const rngItem = Math.floor(Math.random() * featuredItems.length)
+
+        await featuredItems[rngItem].locator('.productinfo').locator('.add-to-cart').click()
+        await page.locator('.close-modal').click()
+        await page.locator('//ul[@class="nav navbar-nav"]/li[3]').click()
+
+        const cartItemQuantity = await page.locator('//td[@class="cart_quantity"]').innerText()
+        const cartItemTotal = await page.locator('.cart_total_price').innerText()
+        
+        await page.locator('//td[@class="cart_description"]//a').click()
+        await page.locator(".btn.btn-default.cart").click()
+        await page.locator('//div[@class="modal-body"]/p/a').click()        
+        
+        const secondCartItemQuantity = await page.locator('//td[@class="cart_quantity"]').innerText()
+        const secondCartItemTotal = await page.locator('.cart_total_price').innerText()
+
+        expect(cartItemQuantity).toEqual("1")
+        expect(secondCartItemQuantity).toEqual("2")
+        expect(Number(secondCartItemTotal.replace(/^Rs\.?\s*/, ''))).toEqual(Number(cartItemTotal.replace(/^Rs\.?\s*/, '')) * 2)
+        
+    })
+
+    test("PUR-07 Sucessfully removes a product from the cart", async ({page}) => {
+        const featuredItems = await page.locator('//div[@class="features_items"]//div[@class="product-image-wrapper"]').all()
+        const rngItem = Math.floor(Math.random() * featuredItems.length)
+
+        await featuredItems[rngItem].locator('.choose').click()
+        await page.locator("#quantity").clear()
+        await page.locator("#quantity").fill("3")
+        await page.locator(".btn.btn-default.cart").click()
+        await page.locator('//div[@class="modal-body"]/p/a').click()
+
+        
+        await page.locator(".cart_quantity_delete").click()
+        await page.locator('//ul[@class="nav navbar-nav"]/li[3]').click()
+
+        const cartContents = await page.locator('//tbody/tr').all()
+
+        expect(cartContents.length).toEqual(0)
     })
 })
