@@ -51,6 +51,7 @@ export class LoginHelper {
       //If the .json storageState file doesn't exist, login and create one.
       //Goto login page, enter email & password, click login:
       await page.goto("https://www.automationexercise.com/login");
+      if (await page.getByRole('button', { name: 'Consent' }).isVisible()) await page.getByRole('button', { name: 'Consent' }).click()
       await page.fill("input[data-qa='login-email']", this.loginEmail);
       await page.fill("input[data-qa='login-password']", this.loginPassword);
       await page.click("button[data-qa='login-button']");
