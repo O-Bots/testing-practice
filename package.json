@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "testui": "npx playwright test --ui --workers=1"
+    "testui": "npx playwright test --ui --workers=1",
+    "testow": "npx playwright test --project chromium --headed  -g 'Test-Title'"
   },
   "repository": {
     "type": "git",

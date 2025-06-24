@@ -1,10 +1,17 @@
+//This file contains tests focused around general ecommerse website usage
+//Tests are created to run sequentially
+//Test data used has been prepared beforehand
+
 import { test, expect } from '@playwright/test';
 
+//Import premade test data from JSON file
 import account from '../../test-data/ow_accountdetails.json';
 
 const baseURL = 'https://www.automationexercise.com/'
 
-async function createUser(browser: any) {
+//Function to create a new user account using test data
+//Returns nothing so type is set to "Promise<void>" (would be "void" if it was not async)
+async function createUser(browser: any): Promise<void> {
     await browser.getByRole('link', { name: ' Signup / Login' }).click()
 
     await expect(browser.locator('div').filter({ hasText: 'New User Signup! Signup' }).nth(2)).toBeVisible()
@@ -29,18 +36,11 @@ async function createUser(browser: any) {
     await browser.getByRole('textbox', { name: 'Mobile Number *' }).fill(account.mobile_number)
     await browser.getByRole('button', { name: 'Create Account' }).click()
     await browser.locator('.btn.btn-primary', {hasText: 'Continue'}).click();
-
-    //Verify that the account name is correct
-    expect(await browser.locator('.shop-menu.pull-right').getByRole('listitem').nth(9).locator('b').innerText()).toEqual(account.account_name);
-
-    //Log out of account
-    await browser.locator('.shop-menu.pull-right').getByRole('listitem').nth(3).click()
-
-    // //Verify account is logged out
-    // expect(await browser.getByText('Login to your account Login')).toBeVisible()
 }
 
-async function login(browser: any) {
+//Simple function to log in to a user account using test data
+//Returns nothing so type is set to "Promise<void>" (would be "void" if it was not async)
+async function login(browser: any): Promise<void> {
     await browser.getByRole('link', { name: ' Signup / Login' }).click()
 
     await expect(browser.getByText('Login to your account Login')).toBeVisible()
@@ -48,26 +48,34 @@ async function login(browser: any) {
     await browser.getByTestId('login-email').fill(account.email)
     await browser.getByTestId('login-password').fill(account.password)
     await browser.getByTestId('login-button').click()
-
-    //Verify that the account name is correct
-    expect(await browser.locator('.shop-menu.pull-right').getByRole('listitem').nth(9).locator('b').innerText()).toEqual(account.account_name);
 }
 
-test.beforeEach('Test prep', async ({page}, testInfo) => {
-    if(!testInfo.title.includes('API')){
-        await page.goto(baseURL)
-        await page.getByRole('button', { name: 'Consent' }).click()
-    }
+//Setup correct webpage and clears consent pop up before each test is excecuted
+test.beforeEach('Test prep', async ({page}) => {
+    await page.goto(baseURL)
+    await page.getByRole('button', { name: 'Consent' }).click()
 })
 
+//Tests confirming Account functionality works as expected
 test.describe("Account functionality", () => {
-    test("ACC-01+08 Account can be created as expected", async ({page}) => {
-        
+    test("ACC-01 Account can be created as expected", async ({page}) => {
+        //Create account for test
         await createUser(page)
 
+        //Verify that the account is created and name matches test data used
+        expect(await page.locator('.shop-menu.pull-right').getByRole('listitem').nth(9).locator('b').innerText()).toEqual(account.account_name);
+
+        //Cleanup -- Delete account
+        await page.getByRole('link', { name: ' Delete Account' }).click()
     })
 
     test("ACC-02 Unable to create account with already used email", async ({page}) => {
+        //Create account for test
+        await createUser(page)
+
+        //Log out of account
+        await page.locator('.shop-menu.pull-right').getByRole('listitem').nth(3).click()
+
         await page.getByRole('link', { name: ' Signup / Login' }).click()
 
         await expect(page.locator('div').filter({ hasText: 'New User Signup! Signup' }).nth(2)).toBeVisible()
@@ -75,6 +83,11 @@ test.describe("Account functionality", () => {
         await page.getByRole('textbox', { name: 'Name' }).fill(account.account_name)
         await page.locator('form').filter({ hasText: 'Signup' }).getByPlaceholder('Email Address').fill(account.email)
         await page.getByRole('button', { name: 'Signup' }).click()
+        
+        expect(await page.locator('//*[@class="signup-form"]//p').innerText()).toEqual("Email Address already exist!")
+
+        //Cleanup -- Delete account
+        await page.getByRole('link', { name: ' Delete Account' }).click()
         
     })
 
@@ -92,27 +105,32 @@ test.describe("Account functionality", () => {
         await page.locator('#days').selectOption(account.dob.day)
         await page.getByRole('button', { name: 'Create Account' }).click()
 
-        expect(await page.url()).toContain("signup")
-        
+        expect(await page.url()).toContain("signup") 
     })
 
-    test("ACC-04+08 Can log in to an already created account", async ({page}) => {
-        await page.getByRole('link', { name: ' Signup / Login' }).click()
+    test("ACC-04 Can log in to an already created account", async ({page}) => {
+        //Create account for test
+        await createUser(page)
 
-        await expect(page.getByText('Login to your account Login')).toBeVisible()
+        //Log out of account
+        await page.locator('.shop-menu.pull-right').getByRole('listitem').nth(3).click()
 
-        await page.getByTestId('login-email').fill(account.email)
-        await page.getByTestId('login-password').fill(account.password)
-        await page.getByTestId('login-button').click()
+        await login(page)
 
         //Verify that the account name is correct
         expect(await page.locator('.shop-menu.pull-right').getByRole('listitem').nth(9).locator('b').innerText()).toEqual(account.account_name);
 
-        //Log out of account
-        await page.locator('.shop-menu.pull-right').getByRole('listitem').nth(3).click()
+        //Cleanup -- Delete account
+        await page.getByRole('link', { name: ' Delete Account' }).click()
     })
 
     test("ACC-05 Unable to login with incorrect details", async ({page}) => {
+        //Create account for test
+        await createUser(page)
+
+        //Log out of account
+        await page.locator('.shop-menu.pull-right').getByRole('listitem').nth(3).click()
+
         await page.getByRole('link', { name: ' Signup / Login' }).click()
 
         await expect(page.getByText('Login to your account Login')).toBeVisible()
@@ -122,9 +140,21 @@ test.describe("Account functionality", () => {
         await page.getByTestId('login-button').click()
         
         await expect(page.locator('.login-form').locator('p')).toHaveText('Your email or password is incorrect!')
+
+        //Cleanup -- Delete account
+        await page.getByTestId('login-email').fill(account.email)
+        await page.getByTestId('login-password').fill(account.password)
+        await page.getByTestId('login-button').click()
+        await page.getByRole('link', { name: ' Delete Account' }).click()
     })
 
     test("ACC-06 Unable to login with case incorrect details", async ({page}) => {
+        //Create account for test
+        await createUser(page)
+
+        //Log out of account
+        await page.locator('.shop-menu.pull-right').getByRole('listitem').nth(3).click()
+
         await page.getByRole('link', { name: ' Signup / Login' }).click()
 
         await expect(page.getByText('Login to your account Login')).toBeVisible()
@@ -134,20 +164,55 @@ test.describe("Account functionality", () => {
         await page.getByTestId('login-button').click()
         
         await expect(page.locator('.login-form').locator('p')).toHaveText('Your email or password is incorrect!')
+
+        //Cleanup -- Delete account
+        await page.getByTestId('login-email').fill(account.email)
+        await page.getByTestId('login-password').fill(account.password)
+        await page.getByTestId('login-button').click()
+        await page.getByRole('link', { name: ' Delete Account' }).click()
+    })
+
+    test("ACC-08 Successfully able to log out of user account", async ({page}) => {
+        //Create account for test
+        await createUser(page)
+
+        //Verify that the account is created and name matches test data used
+        expect(await page.locator('.shop-menu.pull-right').getByRole('listitem').nth(9).locator('b').innerText()).toEqual(account.account_name);
+        
+        //Log out of account
+        await page.locator('.shop-menu.pull-right').getByRole('listitem').nth(3).click()
+
+        await expect(page.getByText('Login to your account Login')).toBeVisible()
+
+        //Cleanup -- Delete account
+        await page.getByTestId('login-email').fill(account.email)
+        await page.getByTestId('login-password').fill(account.password)
+        await page.getByTestId('login-button').click()
+        await page.getByRole('link', { name: ' Delete Account' }).click()
     })
 
     test("ACC-10 Can delete an already created account", async ({page}) => {
+        //Create account for test
+        await createUser(page)
 
-        await login(page)
+        //Verify that the account name is correct
+        expect(await page.locator('.shop-menu.pull-right').getByRole('listitem').nth(9).locator('b').innerText()).toEqual(account.account_name);
 
         await page.getByRole('link', { name: ' Delete Account' }).click()
+
+        expect(await page.locator('//*[@data-qa="account-deleted"]').isVisible()).toBeTruthy()
 
         //Confirm account deletion
         await page.locator('.btn.btn-primary', {hasText: 'Continue'}).click();
 
+        await login(page)
+
+        //Verify login error message
+        expect(await page.locator('.login-form').locator('p').innerText()).toEqual('Your email or password is incorrect!')
     })
 })
 
+//Tests confirming purchase flow functionality is working as expected
 test.describe("Purchase flow", () => {
     test("PUR-01 Searching for an existing product works as expected", async ({page}) => {
         await page.getByRole('link', { name: 'Products' }).click()
@@ -212,7 +277,7 @@ test.describe("Purchase flow", () => {
         expect(itemPrice.replace(/^Rs\.?\s*/, '')).toEqual(cartItemPrice.replace(/^Rs\.?\s*/, ''))
     })
 
-    test("PUR-06 Successfully changes quantity of items in cart", async ({page}) => {
+    test("PUR-06-08 Successfully changes quantity of items in cart", async ({page}) => {
         const featuredItems = await page.locator('//div[@class="features_items"]//div[@class="product-image-wrapper"]').all()
         const rngItem = Math.floor(Math.random() * featuredItems.length)
 
@@ -254,4 +319,73 @@ test.describe("Purchase flow", () => {
 
         expect(cartContents.length).toEqual(0)
     })
+
+    test("PUR-09 Unable to checkout without an account", async ({page}) => {
+        const featuredItems = await page.locator('//div[@class="features_items"]//div[@class="product-image-wrapper"]').all()
+        const rngItem = Math.floor(Math.random() * featuredItems.length)
+
+        await featuredItems[rngItem].locator('.productinfo').locator('.add-to-cart').click()
+        await page.locator('.close-modal').click()
+        await page.locator('//ul[@class="nav navbar-nav"]/li[3]').click()
+
+        await page.getByText('Proceed To Checkout').click()
+        const accountCheckoutCheck =  await page.locator('//div[@class="modal-body"]/p').nth(0).innerText()
+
+        expect(await page.getByRole('heading', { name: "Checkout"}).isVisible()).toBeTruthy()
+        expect(accountCheckoutCheck).toEqual('Register / Login account to proceed on checkout.')
+    })
+
+    test("PUR-10 Successfully completes checkout flow", async ({page}) => {
+        //Create account for test
+        await createUser(page)
+
+        const featuredItems = await page.locator('//div[@class="features_items"]//div[@class="product-image-wrapper"]').all()
+        const rngItem = Math.floor(Math.random() * featuredItems.length)
+        const itemName = await featuredItems[rngItem].locator('.productinfo').locator('p').innerText()
+        const itemPrice = await featuredItems[rngItem].locator('.productinfo').locator('h2').innerText()
+
+        await featuredItems[rngItem].locator('.productinfo').locator('.add-to-cart').click()
+        await page.locator('.close-modal').click()
+        await page.locator('//ul[@class="nav navbar-nav"]/li[3]').click()
+
+        const cartItemName = await page.locator('//td[@class="cart_description"]//a').innerText()
+        const cartItemPrice = await page.locator('//td[@class="cart_price"]/p').innerText()
+        
+        //Verify items are correct
+        expect(itemName.toLocaleLowerCase()).toEqual(cartItemName.toLocaleLowerCase())
+        expect(itemPrice.replace(/^Rs\.?\s*/, '')).toEqual(cartItemPrice.replace(/^Rs\.?\s*/, ''))
+
+        await page.getByText('Proceed To Checkout').click()
+
+        //Verify Address matches
+        expect(await page.locator('//*[@id="address_delivery"]/li').nth(1).innerText()).toMatch(await page.locator('//*[@id="address_invoice"]/li').nth(1).innerText())
+        expect(await page.locator('//*[@id="address_delivery"]/li').nth(2).innerText()).toMatch(await page.locator('//*[@id="address_invoice"]/li').nth(2).innerText())
+        expect(await page.locator('//*[@id="address_delivery"]/li').nth(3).innerText()).toMatch(await page.locator('//*[@id="address_invoice"]/li').nth(3).innerText())
+        expect(await page.locator('//*[@id="address_delivery"]/li').nth(4).innerText()).toMatch(await page.locator('//*[@id="address_invoice"]/li').nth(4).innerText())
+        expect(await page.locator('//*[@id="address_delivery"]/li').nth(5).innerText()).toMatch(await page.locator('//*[@id="address_invoice"]/li').nth(5).innerText())
+
+        
+        //Verify items again
+        expect(cartItemName).toEqual(await page.locator('//td[@class="cart_description"]//a').innerText())
+        expect(cartItemPrice).toEqual(await page.locator('//td[@class="cart_price"]/p').innerText())
+        
+        await page.getByRole('link', { name: 'Place Order' }).click()
+        
+        //Enter payment details
+        await page.getByTestId('name-on-card').fill(`${account.title} ${account.first_name} ${account.last_name}`)
+        await page.getByTestId('card-number').fill(account.paymentDetails.card_number)
+        await page.getByTestId('cvc').fill(account.paymentDetails.card_cvc)
+        await page.getByTestId('expiry-month').fill(account.paymentDetails.card_expiry_month)
+        await page.getByTestId('expiry-year').fill(account.paymentDetails.card_expiry_year)
+        
+        //Confirm payment
+        await page.getByTestId('pay-button').click()
+        
+        expect((await page.getByTestId('order-placed').innerText()).toLocaleLowerCase()).toEqual("Order Placed!".toLocaleLowerCase())
+
+        //Cleanup -- delete account
+        await page.getByRole('link', { name: ' Delete Account' }).click()
+        await page.locator('.btn.btn-primary', {hasText: 'Continue'}).click();
+    })
+    
 })

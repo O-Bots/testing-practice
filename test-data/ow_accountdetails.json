@@ -19,5 +19,11 @@
         "city": "GreySkinned",
         "zipcode": "12Balls"
     },
-    "mobile_number": "12345678913"
+    "mobile_number": "12345678913",
+    "paymentDetails": {
+        "card_number": "5400437018685973",
+        "card_cvc": "008",
+        "card_expiry_month": "04",
+        "card_expiry_year": "2030"
+    }
 }
