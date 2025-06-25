@@ -1,7 +1,8 @@
 import { faker } from "@faker-js/faker"
 
 export class Person {
-    title = faker.person.prefix();
+    // title = faker.person.prefix(); //Commenting out due to limited prefixes available on the app being tested
+    title = "Mr";
     first_name = faker.person.firstName();
     last_name = faker.person.lastName();
     dob: {
@@ -41,7 +42,8 @@ export class Person {
         this.address = {
             address1: faker.location.streetAddress(),
             address2: faker.location.street(),
-            country: faker.location.country(),
+            // country: faker.location.country(), //Commenting out due to limited countries available on the app being tested
+            country: "Canada",
             state: faker.location.state(),
             city: faker.location.city(),
             zipcode: faker.location.zipCode(),
