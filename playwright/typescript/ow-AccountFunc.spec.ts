@@ -5,7 +5,7 @@
 import { test, expect } from '@playwright/test';
 
 //Import helper class to generate user info
-import {Person} from '../../test-data/userInfoHelper'
+import {Person} from '../helperScripts/userInfoHelper'
 
 const baseURL = 'https://www.automationexercise.com/'
 const newUser = new Person
